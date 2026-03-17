@@ -1,0 +1,16 @@
+# Ignore EVERYTHING
+*
+
+# Allow these folders
+!lib/
+# !assets/
+!helper/
+
+# Allow their contents
+!lib/**
+# !assets/**
+!helper/**
+
+# Allow git-related files
+!.gitignore
+!README.md
