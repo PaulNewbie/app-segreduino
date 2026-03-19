@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../service/api_service.dart';
 
 class MachineDashboardPage extends StatefulWidget {
   const MachineDashboardPage({super.key});
@@ -29,7 +30,7 @@ class _MachineDashboardPageState extends State<MachineDashboardPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('https://segreduino.com/segreduino/dashboard/add_kiosk.php'),
+        Uri.parse('${ApiConfig.baseUrl}/controllers/Actions/add_kiosk.php')
       );
 
       if (response.statusCode == 200) {

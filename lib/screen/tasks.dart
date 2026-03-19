@@ -222,7 +222,7 @@ class _TasksListState extends State<_TasksList> {
   Future<void> _markTaskAsDone(String taskId) async {
     try {
       final response = await http.post(
-        Uri.parse('https://segreduino.com/segreduino/dashboard/mark_task_done.php'),
+        Uri.parse('${ApiConfig.baseUrl}/controllers/Actions/mark_task_done.php'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -470,7 +470,7 @@ class _CompletedTasksListState extends State<CompletedTasksList> {
 
       // ✅ Pass userId to fetch tasks specific to this user
       final uri = Uri.parse(
-        'https://segreduino.com/segreduino/dashboard/tasks_api.php?user_id=${widget.userId}',
+        '${ApiConfig.baseUrl}/controllers/Api/tasks_api.php?user_id=${widget.userId}',
       );
 
       final response = await http.get(

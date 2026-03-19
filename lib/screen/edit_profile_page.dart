@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
+import '../service/api_service.dart';
 
 class EditProfilePage extends StatefulWidget {
   final String fullName;
@@ -42,7 +43,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Future<bool> _saveProfile() async {
     final url = Uri.parse(
-        'https://segreduino.com/segreduino/dashboard/update_profile.php');
+        '${ApiConfig.baseUrl}/controllers/Actions/update_profile.php');
     try {
       final response = await http.post(
         url,

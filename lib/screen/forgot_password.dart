@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../service/api_service.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -41,7 +42,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() => _errorMessage = null);
 
     final response = await http.post(
-      Uri.parse('https://segreduino.com/segreduino/dashboard/verification_email.php'),
+      Uri.parse('${ApiConfig.baseUrl}/verification_email.php'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email}),
     );
@@ -78,7 +79,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     }
 
     final response = await http.post(
-      Uri.parse('https://segreduino.com/segreduino/dashboard/verify_code.php'),
+      Uri.parse('${ApiConfig.baseUrl}/controllers/Actions/verify_code.php'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'code': code}),
     );
@@ -134,7 +135,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     }
 
     final response = await http.post(
-      Uri.parse('https://segreduino.com/segreduino/dashboard/verify_code_and_reset.php'),
+      Uri.parse('${ApiConfig.baseUrl}/controllers/Actions/verify_code_and_reset.php'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'code': code, 'new_password': newPassword}),
     );

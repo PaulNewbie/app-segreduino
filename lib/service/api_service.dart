@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class ApiConfig {
-  // Environment URLs
-
-  // Set your active environment here
-  static const String baseUrl = 'https://segreduino.com/segreduino/dashboard';
+  // Set your local IP and port for testing
+  // static const String baseUrl = 'https://segreduino.com/segreduino/dashboard';
+  // When deploying to production later, just change this single line to "https://segreduino.com"
+  // static const String baseUrl = 'http://192.168.100.209:8000';
+  static const String baseUrl = 'http://192.168.55.127:8000';
 
   // API timeout duration
   static const Duration timeoutDuration = Duration(seconds: 20);
@@ -23,7 +23,7 @@ class ApiService {
   // 🔹 Facebook Login
   static Future<Map<String, dynamic>> loginWithFacebook(
       String facebookId, String fullName, String email) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}dashboard/facebook_login_api.php');
+    final url = Uri.parse('${ApiConfig.baseUrl}/controllers/Api/facebook_login_api.php');
 
     final response = await http.post(
       url,
@@ -33,7 +33,7 @@ class ApiService {
         'full_name': fullName,
         'email': email,
       }),
-    );
+    ).timeout(ApiConfig.timeoutDuration);
 
     print('FB raw response: ${response.body}');
     final data = jsonDecode(response.body);
@@ -51,37 +51,32 @@ class ApiService {
     }
   }
 
+  // 🔹 LOGIN
+  static Future<Map<String, dynamic>> loginUser(String username, String password) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/controllers/Api/login_api.php'),
+      headers: _headers,
+      body: jsonEncode({
+        'username': username,
+        'password': password,
+      }),
+    ).timeout(ApiConfig.timeoutDuration);
 
+    final data = jsonDecode(response.body);
 
-  // LOGIN with better error handling
-static Future<Map<String, dynamic>> loginUser(String username, String password) async {
-  final response = await http.post(
-     Uri.parse('https://segreduino.com/segreduino/dashboard/login_api.php'),
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: jsonEncode({
-      'username': username,
-      'password': password,
-    }),
-  ).timeout(ApiConfig.timeoutDuration);
-
-  final data = jsonDecode(response.body);
-
-  if (data['success'] == true) {
-    return data['user'];
-  } else {
-    throw Exception(data['message']);
+    if (data['success'] == true) {
+      return data['user'];
+    } else {
+      throw Exception(data['message']);
+    }
   }
-}
 
-
+  // 🔹 Check Username
   static Future<bool> checkUsernameExists(String username, {int retryCount = 3}) async {
     for (int i = 0; i < retryCount; i++) {
       try {
         final response = await http.post(
-          Uri.parse('${ApiConfig.baseUrl}/check_username.php'),
+          Uri.parse('${ApiConfig.baseUrl}/controllers/Api/check_username.php'),
           headers: _headers,
           body: jsonEncode({"username": username}),
         ).timeout(ApiConfig.timeoutDuration);
@@ -102,12 +97,11 @@ static Future<Map<String, dynamic>> loginUser(String username, String password) 
     return false;
   }
 
-
-  // RESET PASSWORD with improved security
+  // 🔹 RESET PASSWORD
   static Future<bool> resetPassword(String username, String newPassword) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/segreduino/dashboard/reset_password.php'),
+        Uri.parse('${ApiConfig.baseUrl}/controllers/reset_password.php'),
         headers: _headers,
         body: jsonEncode({
           "username": username,
@@ -128,7 +122,7 @@ static Future<Map<String, dynamic>> loginUser(String username, String password) 
     }
   }
 
-  // FORGOT PASSWORD FLOW with validation
+  // 🔹 FORGOT PASSWORD FLOW
   static Future<bool> forgotPasswordReset({
     required String email,
     required String code,
@@ -136,7 +130,7 @@ static Future<Map<String, dynamic>> loginUser(String username, String password) 
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/segreduino/dashboard/verify_code_and_reset.php'),
+        Uri.parse('${ApiConfig.baseUrl}/controllers/Actions/verify_code_and_reset.php'),
         headers: _headers,
         body: jsonEncode({
           "email": email,
@@ -158,7 +152,7 @@ static Future<Map<String, dynamic>> loginUser(String username, String password) 
     }
   }
 
-  // REGISTER USER with validation
+  // 🔹 REGISTER USER
   static Future<bool> registerUser(
     String fullName,
     String username,
@@ -168,11 +162,8 @@ static Future<Map<String, dynamic>> loginUser(String username, String password) 
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('https://segreduino.com/segreduino/dashboard/register_api.php'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        Uri.parse('${ApiConfig.baseUrl}/controllers/Api/register_api.php'),
+        headers: _headers,
         body: jsonEncode({
           "full_name": fullName,
           "username": username,
@@ -194,7 +185,7 @@ static Future<Map<String, dynamic>> loginUser(String username, String password) 
     }
   }
 
-  // UPDATE PROFILE with validation
+  // 🔹 UPDATE PROFILE
   static Future<bool> updateProfile({
     required String email,
     required String fullName,
@@ -202,7 +193,7 @@ static Future<Map<String, dynamic>> loginUser(String username, String password) 
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/dashboard/update_profile.php'),
+        Uri.parse('${ApiConfig.baseUrl}/controllers/Actions/update_profile.php'),
         headers: _headers,
         body: jsonEncode({
           "email": email,
@@ -224,13 +215,13 @@ static Future<Map<String, dynamic>> loginUser(String username, String password) 
     }
   }
 
+  // 🔹 FETCH TASKS
   static Future<List<dynamic>> fetchTasks({String? userId, int retryCount = 3}) async {
     for (int i = 0; i < retryCount; i++) {
       try {
         final uri = userId != null && userId.isNotEmpty
-            ? Uri.parse('${ApiConfig.baseUrl}/tasks_api.php?user_id=$userId')
-            : Uri.parse('${ApiConfig.baseUrl}/tasks_api.php');
-
+            ? Uri.parse('${ApiConfig.baseUrl}/controllers/Api/tasks_api.php?user_id=$userId')
+            : Uri.parse('${ApiConfig.baseUrl}/controllers/Api/tasks_api.php');
 
         final response = await http
             .get(uri, headers: _headers)
@@ -254,15 +245,12 @@ static Future<Map<String, dynamic>> loginUser(String username, String password) 
     throw Exception('Failed to load tasks after $retryCount attempts');
   }
 
-
-
-
-
+  // 🔹 FETCH SCHEDULES
   static Future<List<dynamic>> fetchSchedules(String userId, {int retryCount = 3}) async {
     for (int i = 0; i < retryCount; i++) {
       try {
         final response = await http.get(
-          Uri.parse('${ApiConfig.baseUrl}/schedules.php?user_id=$userId'),
+          Uri.parse('${ApiConfig.baseUrl}/controllers/Api/schedules.php?user_id=$userId'),
           headers: _headers,
         ).timeout(ApiConfig.timeoutDuration);
 
@@ -282,14 +270,12 @@ static Future<Map<String, dynamic>> loginUser(String username, String password) 
     throw Exception('Failed to load schedules after $retryCount attempts');
   }
 
-
-
-  // FETCH UNREAD NOTIFICATIONS COUNT with retry
+  // 🔹 FETCH UNREAD NOTIFICATIONS COUNT
   static Future<int> fetchUnreadCount({int retryCount = 3}) async {
     for (int i = 0; i < retryCount; i++) {
       try {
         final response = await http.get(
-          Uri.parse('${ApiConfig.baseUrl}/controllers/get_unread_notifications_count.php'),
+          Uri.parse('${ApiConfig.baseUrl}/controllers/Api/get_alert_count.php'),
           headers: _headers,
         ).timeout(ApiConfig.timeoutDuration);
 
@@ -305,55 +291,52 @@ static Future<Map<String, dynamic>> loginUser(String username, String password) 
     return 0;
   }
 
-  // CHANGE PASSWORD
- static Future<bool> changePassword({
-  required String oldPassword,
-  required String newPassword,
-}) async {
-  final prefs = await SharedPreferences.getInstance();
-  final email = prefs.getString('email'); // Get saved email from login
+  // 🔹 CHANGE PASSWORD
+  static Future<bool> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('email');
 
-  if (email == null) throw Exception("Email not found in session.");
+    if (email == null) throw Exception("Email not found in session.");
 
-  final response = await http.post(
-    Uri.parse('${ApiConfig.baseUrl}/segreduino/dashboard/change_password.php'),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: jsonEncode({
-      "email": email,
-      "old_password": oldPassword,
-      "new_password": newPassword,
-    }),
-  );
-
-  final data = jsonDecode(response.body);
-  if (data['success']) return true;
-
-  throw Exception(data['message']);
-}
-
-
-  // MARK TASK AS DONE
- static Future<bool> markTaskAsDone(String taskId) async {
-  try {
     final response = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}/segreduino/dashboard/mark_task_done.php'),
+      Uri.parse('${ApiConfig.baseUrl}/controllers/Actions/change_password.php'),
       headers: _headers,
       body: jsonEncode({
-        'task_id': taskId,
+        "email": email,
+        "old_password": oldPassword,
+        "new_password": newPassword,
       }),
     ).timeout(ApiConfig.timeoutDuration);
 
     final data = jsonDecode(response.body);
+    if (data['success']) return true;
 
-    if (data['success'] == true) {
-      return true;
-    } else {
-      throw Exception(data['message'] ?? 'Failed to mark task as done');
-    }
-  } catch (e) {
-    throw Exception('Mark task as done failed: ${e.toString()}');
+    throw Exception(data['message']);
   }
-}
+
+  // 🔹 MARK TASK AS DONE
+  static Future<bool> markTaskAsDone(String taskId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/controllers/Actions/mark_task_done.php'),
+        headers: _headers,
+        body: jsonEncode({
+          'task_id': taskId,
+        }),
+      ).timeout(ApiConfig.timeoutDuration);
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        return true;
+      } else {
+        throw Exception(data['message'] ?? 'Failed to mark task as done');
+      }
+    } catch (e) {
+      throw Exception('Mark task as done failed: ${e.toString()}');
+    }
+  }
 }

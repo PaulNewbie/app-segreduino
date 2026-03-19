@@ -13,7 +13,7 @@ class DatabaseHelper {
       {String? email, String? phone, String? profilePicture}) async {
     try {
       final response = await http.post(
-        Uri.parse('https://segreduino.com/segreduino/dashboard/register_api.php'),
+        Uri.parse('${ApiConfig.baseUrl}/controllers/Api/register_api.php'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -43,7 +43,7 @@ class DatabaseHelper {
 
   // Login user via hosting API
   static Future<Map<String, dynamic>> loginUser(String username, String password) async {
-    final url = Uri.parse('https://segreduino.com/segreduino/dashboard/login_api.php');
+    final url = Uri.parse('${ApiConfig.baseUrl}/controllers/Api/login_api.php');
 
     print('Sending login request to $url');
     print('Payload: ${jsonEncode({'username': username, 'password': password})}');
