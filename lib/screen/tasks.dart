@@ -201,7 +201,7 @@ class _TasksListState extends State<_TasksList> {
       if (mounted) {
         setState(() {
           _tasks = allTasks
-              .where((task) => task.status.toLowerCase() == 'pending')
+              .where((task) => task.status.toLowerCase() == 'pending' || task.status.toLowerCase() == 'in_progress')
               .toList();
           _isLoading = false;
           _error = null;
@@ -296,7 +296,7 @@ class _TasksListState extends State<_TasksList> {
             const SizedBox(height: 8),
             Text('Bin ID: ${task.binId}'),
             Text('Machine ID: ${task.machineId}'),
-            Text('Status: ${task.status}'),
+            Text('Status: ${task.status == 'in_progress' ? 'In Progress' : task.status}'),
             Text('Created at: ${task.createdAt}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
             if (task.status != 'Completed')
               Align(

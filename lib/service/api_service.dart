@@ -7,9 +7,10 @@ class ApiConfig {
   // Set your local IP and port for testing
   // static const String baseUrl = 'https://segreduino.com/segreduino/dashboard';
   // When deploying to production later, just change this single line to "https://segreduino.com"
-  // static const String baseUrl = 'http://192.168.100.209:8000';
-  static const String baseUrl = 'http://192.168.55.127:8000';
-
+  // static const String baseUrl = 'http://192.168.100.209:8000'; // Home Wifi ip add 
+  static const String baseUrl = 'https://floralwhite-mule-302326.hostingersite.com';// Hostinger live server
+  // static const String baseUrl = 'http://192.168.0.114:8000'; // Dea wifi
+  
   // API timeout duration
   static const Duration timeoutDuration = Duration(seconds: 20);
 }
@@ -250,7 +251,7 @@ class ApiService {
     for (int i = 0; i < retryCount; i++) {
       try {
         final response = await http.get(
-          Uri.parse('${ApiConfig.baseUrl}/controllers/Api/schedules.php?user_id=$userId'),
+          Uri.parse('${ApiConfig.baseUrl}/controllers/Api/schedules_api.php?user_id=$userId'),
           headers: _headers,
         ).timeout(ApiConfig.timeoutDuration);
 
@@ -339,4 +340,30 @@ class ApiService {
       throw Exception('Mark task as done failed: ${e.toString()}');
     }
   }
+
+  // 🔹 FETCH NOTIFICATIONS
+  static Future<List<dynamic>> fetchNotifications({int retryCount = 3}) async {
+    for (int i = 0; i < retryCount; i++) {
+      try {
+        final response = await http.get(
+          Uri.parse('${ApiConfig.baseUrl}/controllers/Api/get_notifications.php'),
+          headers: _headers,
+        ).timeout(ApiConfig.timeoutDuration);
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          if (data['success'] == true) {
+            return data['data']; // 'data' contains the array of notifications
+          }
+          throw Exception(data['message'] ?? 'Failed to load notifications');
+        }
+        throw Exception('Server error: ${response.statusCode}');
+      } catch (e) {
+        if (i == retryCount - 1) throw Exception('Failed to load notifications: $e');
+        await Future.delayed(Duration(seconds: i + 1));
+      }
+    }
+    throw Exception('Failed to load notifications after $retryCount attempts');
+  }
+
 }

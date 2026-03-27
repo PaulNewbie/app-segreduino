@@ -1,31 +1,43 @@
 import 'package:flutter/material.dart';
+import '../service/api_service.dart'; // Make sure this path matches your project structure
 
-class OverflowNotificationsPage extends StatelessWidget {
+class OverflowNotificationsPage extends StatefulWidget {
   const OverflowNotificationsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, String>> overflows = [
-      {
-        'bin': 'Biodegradable',
-        'status': 'Bin is full',
-        'time': 'June 5, 10:30 AM',
-        'urgency': 'high'
-      },
-      {
-        'bin': 'Recyclable',
-        'status': 'Almost overflowing',
-        'time': 'June 4, 4:00 PM',
-        'urgency': 'medium'
-      },
-      {
-        'bin': 'Non-Biodegradable',
-        'status': 'Overflow detected',
-        'time': 'June 3, 9:10 AM',
-        'urgency': 'high'
-      },
-    ];
+  State<OverflowNotificationsPage> createState() => _OverflowNotificationsPageState();
+}
 
+class _OverflowNotificationsPageState extends State<OverflowNotificationsPage> {
+  List<dynamic> notifications = [];
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    try {
+      final data = await ApiService.fetchNotifications();
+      setState(() {
+        // Optional: If you ONLY want 'bin_full' on this specific page
+        // notifications = data.where((n) => n['type'] == 'bin_full').toList();
+        notifications = data; 
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Failed to load alerts.';
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -47,17 +59,38 @@ class OverflowNotificationsPage extends StatelessWidget {
             stops: const [0.0, 0.3],
           ),
         ),
-        child: overflows.isEmpty
-            ? _buildEmptyState()
-            : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: overflows.length,
-                itemBuilder: (context, index) {
-                  final overflow = overflows[index];
-                  return _buildNotificationCard(overflow, context);
-                },
-              ),
+        child: _buildBody(),
       ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      );
+    }
+
+    if (errorMessage != null) {
+      return Center(
+        child: Text(
+          errorMessage!,
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+        ),
+      );
+    }
+
+    if (notifications.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: notifications.length,
+      itemBuilder: (context, index) {
+        final notification = notifications[index];
+        return _buildNotificationCard(notification, context);
+      },
     );
   }
 
@@ -68,8 +101,11 @@ class OverflowNotificationsPage extends StatelessWidget {
         children: [
           Image.asset(
             'assets/check_circle.png',
-            width: 120, // mas malaki na
+            width: 120,
             height: 120,
+            // Fallback in case image is missing:
+            errorBuilder: (context, error, stackTrace) => 
+                Icon(Icons.check_circle, size: 120, color: Colors.green.shade700),
           ),
           const SizedBox(height: 16),
           Text(
@@ -93,9 +129,17 @@ class OverflowNotificationsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildNotificationCard(Map<String, String> overflow, BuildContext context) {
-    Color urgencyColor = _getUrgencyColor(overflow['urgency']!);
-    String binImage = _getBinImage(overflow['bin']!);
+  Widget _buildNotificationCard(dynamic notification, BuildContext context) {
+    // Determine mapping based on the data sent from PHP
+    String type = notification['type'] ?? 'unknown';
+    String binName = notification['raw_message'] ?? 'General Bin';
+    String status = notification['msg'] ?? 'Notification';
+    String time = notification['time'] ?? 'Unknown time';
+    
+    // Assign urgency logic
+    String urgency = type == 'bin_full' ? 'high' : 'medium';
+    Color urgencyColor = _getUrgencyColor(urgency);
+    String binImage = _getBinImage(binName);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -125,8 +169,11 @@ class OverflowNotificationsPage extends StatelessWidget {
                     ),
                     child: Image.asset(
                       binImage,
-                      width: 64, // mas malaki na
+                      width: 64,
                       height: 64,
+                      // Fallback icon if the asset image is missing
+                      errorBuilder: (context, error, stackTrace) => 
+                          Icon(Icons.delete_outline, size: 64, color: urgencyColor),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -135,7 +182,7 @@ class OverflowNotificationsPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          overflow['bin']!,
+                          binName,
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -143,7 +190,7 @@ class OverflowNotificationsPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          overflow['status']!,
+                          status,
                           style: TextStyle(
                             color: urgencyColor,
                             fontWeight: FontWeight.w500,
@@ -152,7 +199,7 @@ class OverflowNotificationsPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _buildUrgencyIndicator(overflow['urgency']!),
+                  _buildUrgencyIndicator(urgency),
                 ],
               ),
               const Divider(height: 24),
@@ -161,7 +208,7 @@ class OverflowNotificationsPage extends StatelessWidget {
                   Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 8),
                   Text(
-                    overflow['time']!,
+                    time,
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 14,
@@ -207,17 +254,14 @@ class OverflowNotificationsPage extends StatelessWidget {
     }
   }
 
-  // Return the asset path for each bin type
   String _getBinImage(String binType) {
-    switch (binType) {
-      case 'Biodegradable':
-        return 'assets/biodegradable_bin.png';
-      case 'Recyclable':
-        return 'assets/recyclable_bin.png';
-      case 'Non-Biodegradable':
-        return 'assets/non_biodegradable_bin.png';
-      default:
-        return 'assets/bin.png';
+    if (binType.toLowerCase().contains('non')) {
+      return 'assets/non_biodegradable_bin.png';
+    } else if (binType.toLowerCase().contains('bio')) {
+      return 'assets/biodegradable_bin.png';
+    } else if (binType.toLowerCase().contains('recycl')) {
+      return 'assets/recyclable_bin.png';
     }
+    return 'assets/bin.png'; // default
   }
 }

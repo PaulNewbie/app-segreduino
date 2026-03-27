@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../service/api_service.dart';
+import 'package:Seregduino/screen/overflow_notifications_page.dart'; // Adjust path if needed
 
 class MachineDashboardPage extends StatefulWidget {
   const MachineDashboardPage({super.key});
@@ -82,7 +83,23 @@ class _MachineDashboardPageState extends State<MachineDashboardPage> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_active, color: Colors.white),
+            onPressed: () {
+              // This opens the OverflowNotificationsPage when tapped
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OverflowNotificationsPage(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
+
+
       body: Builder(builder: (context) {
         if (isLoading) {
           return const Center(child: CircularProgressIndicator());
