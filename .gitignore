@@ -1,16 +1,66 @@
-# Ignore EVERYTHING
-*
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
 
-# Allow these folders
-!lib/
-# !assets/
-!helper/
+# IntelliJ / Android Studio related
+*.iml
+*.ipr
+*.iws
+.idea/
 
-# Allow their contents
-!lib/**
-# !assets/**
-!helper/**
+# VS Code related
+.vscode/
 
-# Allow git-related files
-!.gitignore
-!README.md
+# Flutter/Dart/Pub related (THIS STOPS HEAVY LIBRARIES FROM PUSHING)
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/web/
+
+# Android related
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+
+# iOS/macOS related (THIS STOPS MASSIVE IOS CACHES)
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/**/xcshareddata/workspacexcuserdata/
+**/ios/**/xcuserdata/
+
+# Environment Variables (THIS PROTECTS YOUR API KEYS)
+*.env
+.env
+
+# Exceptions to above rules.
+!/packages/**/pubspec.yaml
