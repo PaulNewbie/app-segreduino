@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:Seregduino/screen/change_password_page.dart';
-import 'package:Seregduino/screen/edit_profile_page.dart';
-import 'package:Seregduino/screen/login.dart';
-import 'package:Seregduino/screen/sensor_status_page.dart';
+import 'package:Segreduino/screen/change_password_page.dart';
+import 'package:Segreduino/screen/edit_profile_page.dart';
+import 'package:Segreduino/screen/login.dart';
+import 'package:Segreduino/screen/sensor_status_page.dart';
 
 class SystemPage extends StatefulWidget {
   const SystemPage({super.key});

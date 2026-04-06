@@ -11,7 +11,6 @@ echo "🚀 Refactoring API paths across all Dart files..."
 # Define the endpoints that moved to controllers/Api/
 API_ENDPOINTS=(
   "login_api.php"
-  "facebook_login_api.php"
   "register_api.php"
   "tasks_api.php"
 )

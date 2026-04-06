@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'homepage.dart'; // Ensure this file exists
-import 'package:Seregduino/service/api_service.dart';
+import 'package:Segreduino/service/api_service.dart';
 
 class Task {
   final String id;

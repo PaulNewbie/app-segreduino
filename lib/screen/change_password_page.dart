@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:Seregduino/service/api_service.dart';
+import 'package:Segreduino/service/api_service.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});

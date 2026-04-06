@@ -1,11 +1,10 @@
-import 'package:Seregduino/screen/forgot_password.dart';
-import 'package:Seregduino/screen/register.dart';
+import 'package:Segreduino/screen/forgot_password.dart';
+import 'package:Segreduino/screen/register.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../service/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:Seregduino/screen/homepage.dart';
+import 'package:Segreduino/screen/homepage.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -104,50 +103,6 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Google sign in failed: $e')),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _handleFacebookLogin() async {
-    setState(() => _isLoading = true);
-    try {
-      final LoginResult result = await FacebookAuth.instance.login();
-
-      if (result.status == LoginStatus.success) {
-        final userData = await FacebookAuth.instance.getUserData();
-
-        // Save user info to SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('user_id', userData['id'] ?? '');
-        await prefs.setString('full_name', userData['name'] ?? '');
-        await prefs.setString('email', userData['email'] ?? '');
-        await prefs.setString('role', 'staff'); // <-- automatic staff role
-        await prefs.setBool('is_logged_in', true);
-
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DashboardPage(
-              fullName: userData['name'] ?? '',
-              email: userData['email'] ?? '',
-            ),
-          ),
-        );
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Facebook sign in successful!')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Facebook sign in failed: ${result.message}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -347,44 +302,6 @@ class _LoginPageState extends State<LoginPage> {
       ),
     ),
     */
-
-    // Facebook Sign-In Button
-    InkWell(
-      onTap: _isLoading ? null : _handleFacebookLogin,
-      borderRadius: BorderRadius.circular(12),
-      splashColor: Colors.grey.withOpacity(0.2),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.facebook, size: 24, color: Color(0xFF1877F2)),
-            SizedBox(width: 10),
-            Text(
-              'Facebook',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
   ],
 ),
 

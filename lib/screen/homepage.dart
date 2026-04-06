@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:Seregduino/screen/bin_level_page.dart';
-import 'package:Seregduino/screen/system.dart';
-import 'package:Seregduino/screen/tasks.dart';
-import 'package:Seregduino/screen/unrecognized_waste_page.dart';
-import 'package:Seregduino/screen/edit_profile_page.dart';
-import 'package:Seregduino/screen/dashboard.dart';
+import 'package:Segreduino/screen/bin_level_page.dart';
+import 'package:Segreduino/screen/system.dart';
+import 'package:Segreduino/screen/tasks.dart';
+import 'package:Segreduino/screen/unrecognized_waste_page.dart';
+import 'package:Segreduino/screen/edit_profile_page.dart';
+import 'package:Segreduino/screen/dashboard.dart';
 
 
 

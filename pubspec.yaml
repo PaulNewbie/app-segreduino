@@ -1,4 +1,4 @@
-name: Seregduino
+name: Segreduino
 description: "Segreduino is an automated waste segregation and bin-level monitoring system integrated with IoT and a mobile dashboard for real-time monitoring."
 publish_to: 'none'
 
@@ -24,7 +24,6 @@ dependencies:
   intl: ^0.20.2
   google_sign_in: ^6.1.6
   percent_indicator: ^4.2.2
-  flutter_facebook_auth: ^6.0.4
   google_fonts: ^8.0.2
 
 dev_dependencies:
@@ -40,7 +39,6 @@ flutter:
     - assets/
     - assets/sereg.png
     - assets/google_logo.png
-    - assets/facebook_logo.png
     - assets/biode.png
     - assets/NONBIO.png
     - assets/RECYCLE.png

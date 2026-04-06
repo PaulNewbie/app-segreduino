@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../service/api_service.dart';
-import 'package:Seregduino/screen/overflow_notifications_page.dart'; // Adjust path if needed
+import 'package:Segreduino/screen/overflow_notifications_page.dart'; // Adjust path if needed
 
 class MachineDashboardPage extends StatefulWidget {
   const MachineDashboardPage({super.key});

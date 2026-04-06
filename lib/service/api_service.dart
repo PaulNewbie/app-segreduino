@@ -10,6 +10,7 @@ class ApiConfig {
   // static const String baseUrl = 'http://192.168.100.209:8000'; // Home Wifi ip add 
   static const String baseUrl = 'https://floralwhite-mule-302326.hostingersite.com';// Hostinger live server
   // static const String baseUrl = 'http://192.168.0.114:8000'; // Dea wifi
+  // static const String baseUrl = 'http://192.168.100.119:8000'; // Jewel wifi
   
   // API timeout duration
   static const Duration timeoutDuration = Duration(seconds: 20);
@@ -20,37 +21,6 @@ class ApiService {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
-
-  // 🔹 Facebook Login
-  static Future<Map<String, dynamic>> loginWithFacebook(
-      String facebookId, String fullName, String email) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}/controllers/Api/facebook_login_api.php');
-
-    final response = await http.post(
-      url,
-      headers: _headers,
-      body: jsonEncode({
-        'facebook_id': facebookId,
-        'full_name': fullName,
-        'email': email,
-      }),
-    ).timeout(ApiConfig.timeoutDuration);
-
-    print('FB raw response: ${response.body}');
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200 && data['success'] == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('is_logged_in', true);
-      await prefs.setString('user_id', data['user']['user_id'].toString());
-      await prefs.setString('full_name', data['user']['full_name'] ?? '');
-      await prefs.setString('email', data['user']['email'] ?? '');
-      await prefs.setString('role', 'staff'); // force staff role
-      return Map<String, dynamic>.from(data['user']); // cast
-    } else {
-      throw Exception(data['message'] ?? 'Facebook login failed');
-    }
-  }
 
   // 🔹 LOGIN
   static Future<Map<String, dynamic>> loginUser(String username, String password) async {

@@ -43,7 +43,7 @@ class _MyAppState extends State<MyApp> {
       valueListenable: MyApp.themeNotifier,
       builder: (context, currentMode, _) {
         return MaterialApp(
-          title: 'Seregduino',
+          title: 'Segreduino',
           debugShowCheckedModeBanner: false,
           themeMode: currentMode,
           theme: ThemeData(
