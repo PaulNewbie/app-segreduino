@@ -7,8 +7,8 @@ class ApiConfig {
   // Set your local IP and port for testing
   // static const String baseUrl = 'https://segreduino.com/segreduino/dashboard';
   // When deploying to production later, just change this single line to "https://segreduino.com"
-  // static const String baseUrl = 'http://192.168.100.209:8000'; // Home Wifi ip add 
-  static const String baseUrl = 'https://floralwhite-mule-302326.hostingersite.com';// Hostinger live server
+  static const String baseUrl = 'http://192.168.100.209:8000'; // Home Wifi ip add 
+  // static const String baseUrl = 'https://floralwhite-mule-302326.hostingersite.com';// Hostinger live server
   // static const String baseUrl = 'http://192.168.0.114:8000'; // Dea wifi
   // static const String baseUrl = 'http://192.168.100.119:8000'; // Jewel wifi
   

@@ -249,12 +249,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
 
                       const SizedBox(height: 24),
-                      const Text(
-                        'Or continue with',
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
-                      ),
-                      const SizedBox(height: 16),
-
+               
                      Row(
   mainAxisAlignment: MainAxisAlignment.center,
   children: [

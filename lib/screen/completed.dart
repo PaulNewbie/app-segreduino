@@ -1,52 +1,187 @@
 import 'package:flutter/material.dart';
+// import 'package:http/http.dart' as http;
+// import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../service/api_service.dart';
+// Adjust path if needed
 
-class CompletedTasksList extends StatelessWidget {
-  final List<Map<String, dynamic>> completedTasks;
-  final String userRole;
+// --- DATA MODEL ---
+// We reuse the exact same Task model so it matches the new API data!
+class Task {
+  final String id;
+  final String userId;
+  final String binId;
+  final String machineId;
+  final String machineName;
+  final String binType;
+  final String description;
+  final String status;
+  final String createdAt;
 
-  const CompletedTasksList({
-    super.key,
-    required this.completedTasks,
-    required this.userRole,
+  Task({
+    required this.id, required this.userId, required this.binId, required this.machineId,
+    required this.machineName, required this.binType, required this.description, 
+    required this.status, required this.createdAt,
   });
+
+  factory Task.fromJson(Map<String, dynamic> json) {
+    return Task(
+      id: json['task_id']?.toString() ?? '',
+      userId: json['user_id']?.toString() ?? '',
+      binId: json['bin_id']?.toString() ?? '',
+      machineId: json['machine_id']?.toString() ?? '',
+      machineName: json['machine_name']?.toString() ?? 'Kiosk/Machine',
+      binType: json['bin_type']?.toString() ?? 'Trash Bin',
+      description: json['task_description']?.toString() ?? '',
+      status: json['task_status']?.toString() ?? 'Pending',
+      createdAt: json['created_at']?.toString() ?? '',
+    );
+  }
+}
+
+class CompletedTasksPage extends StatefulWidget {
+  final String userRole;
+  const CompletedTasksPage({Key? key, required this.userRole}) : super(key: key);
+
+  @override
+  _CompletedTasksPageState createState() => _CompletedTasksPageState();
+}
+
+class _CompletedTasksPageState extends State<CompletedTasksPage> {
+  List<Task> _completedTasks = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCompletedTasks();
+  }
+
+  Future<void> _fetchCompletedTasks() async {
+    setState(() { _isLoading = true; _error = null; });
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String userId = prefs.getString('user_id') ?? '';
+      
+      // Use your centralized ApiService to fetch the tasks!
+      final List<dynamic> taskData = await ApiService.fetchTasks(userId: userId);
+      
+      if (mounted) {
+        setState(() {
+          // Filter out everything EXCEPT 'completed' or 'done'
+          _completedTasks = taskData.map((json) => Task.fromJson(json))
+              .where((t) => t.status.toLowerCase() == 'completed' || t.status.toLowerCase() == 'done')
+              .toList();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) setState(() { _isLoading = false; });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (completedTasks.isEmpty) {
-      return const Center(child: Text('No completed tasks'));
-    }
-    return ListView.builder(
-      itemCount: completedTasks.length,
-      itemBuilder: (context, index) {
-        final task = completedTasks[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-          child: ListTile(
-            leading: const Icon(Icons.check_circle, color: Colors.green),
-            title: Text(
-              task['title'] ?? task['task_description'] ?? 'Completed Task',
-              style: const TextStyle(
-                decoration: TextDecoration.lineThrough,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Completed Log', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.green.shade600, // Distinct green app bar for completed tasks!
+      ),
+      backgroundColor: Colors.grey[50], // Very soft grey background to make white cards pop
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.green))
+          : _error != null
+              ? Center(child: Text('Error: $_error', style: const TextStyle(color: Colors.red)))
+              : RefreshIndicator(
+                  color: Colors.green,
+                  onRefresh: _fetchCompletedTasks,
+                  child: _completedTasks.isEmpty
+                      ? ListView(
+                          children: const [
+                            SizedBox(height: 100),
+                            Icon(Icons.assignment_turned_in, size: 80, color: Colors.black12),
+                            SizedBox(height: 16),
+                            Center(child: Text("No completed tasks yet.", style: TextStyle(color: Colors.grey, fontSize: 16))),
+                          ],
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: _completedTasks.length,
+                          itemBuilder: (context, index) {
+                            return _buildCompletedCard(_completedTasks[index]);
+                          },
+                        ),
+                ),
+    );
+  }
+
+  // --- PREMIUM COMPLETED CARD UI ---
+  Widget _buildCompletedCard(Task task) {
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.green.shade200, width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                if (task['description'] != null)
-                  Text(task['description']),
-                if (task['completed_at'] != null)
-                  Text('Completed at: ${task['completed_at']}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                const Icon(Icons.check_circle, color: Colors.green, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    task.description,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold, 
+                      fontSize: 16, 
+                      color: Colors.black54, // Dimmed text
+                      decoration: TextDecoration.lineThrough, // Strikethrough effect!
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'DONE',
+                    style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold, fontSize: 10),
+                  ),
+                ),
               ],
             ),
-            trailing: userRole == 'admin'
-                ? Text('User: ${task['user_id'] ?? ''}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey))
-                : null,
-          ),
-        );
-      },
+            const Divider(height: 24),
+            Row(
+              children: [
+                const Icon(Icons.place, size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text('${task.machineName} • ${task.binType}', style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text('Task Date: ${task.createdAt}', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
