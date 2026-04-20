@@ -336,4 +336,28 @@ class ApiService {
     throw Exception('Failed to load notifications after $retryCount attempts');
   }
 
+  // 🔹 LOG USER ACTIVITY
+  static Future<bool> logActivity(int userId, String action) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/controllers/Api/log_activity.php'),
+        headers: _headers,
+        body: jsonEncode({
+          'user_id': userId,
+          'action': action,
+          'platform': 'Mobile', // Hardcoded platform for the app
+        }),
+      ).timeout(ApiConfig.timeoutDuration);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['success'] == true;
+      }
+      return false;
+    } catch (e) {
+      print('Error logging activity: $e');
+      return false;
+    }
+  }
+
 }

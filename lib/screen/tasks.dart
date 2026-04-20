@@ -215,12 +215,18 @@ class _TasksListState extends State<_TasksList> {
     }
   }
 
-  Future<void> _markTaskAsDone(String taskId) async {
+  // We now pass the whole Task object instead of just the ID
+  Future<void> _markTaskAsDone(Task task) async {
     try {
-      // Use your centralized ApiService instead of manual HTTP calls!
-      final success = await ApiService.markTaskAsDone(taskId);
+      final success = await ApiService.markTaskAsDone(task.id);
 
       if (success) {
+        // We use int.parse() because widget.userId is a String, and your API expects an int
+        await ApiService.logActivity(
+          int.parse(widget.userId), 
+          "Completed task: ${task_id.description}" // This makes the log dynamic!
+        );
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Task completed!'), backgroundColor: Colors.green)
@@ -290,7 +296,7 @@ class _TasksListState extends State<_TasksList> {
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
-                onPressed: () => _markTaskAsDone(task.id), 
+                onPressed: () => _markTaskAsDone(task),
                 icon: const Icon(Icons.check_circle_outline), label: const Text('Mark as Done'),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
               ),

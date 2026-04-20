@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:Segreduino/service/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -37,6 +38,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         if (!mounted) return;
 
         if (success) {
+          // --- ADD LOG HERE ---
+          final prefs = await SharedPreferences.getInstance();
+          final userIdStr = prefs.getString('user_id');
+          if (userIdStr != null) {
+            await ApiService.logActivity(int.parse(userIdStr), "Changed account password via Mobile App");
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Password changed successfully'),

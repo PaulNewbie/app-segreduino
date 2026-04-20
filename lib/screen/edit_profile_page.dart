@@ -55,13 +55,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
         }),
       );
 
-      final data = jsonDecode(response.body);
-      if (data['success'] == true) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('fullName', _fullNameController.text.trim());
-        await prefs.setString('email', _emailController.text.trim());
-        await prefs.setString('phone', _phoneController.text.trim());
-        return true;
+  final data = jsonDecode(response.body);
+    if (data['success'] == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('fullName', _fullNameController.text.trim());
+      await prefs.setString('email', _emailController.text.trim());
+      await prefs.setString('phone', _phoneController.text.trim());
+
+      // --- ADD LOG HERE ---
+      final userIdStr = prefs.getString('user_id');
+      if (userIdStr != null) {
+        await ApiService.logActivity(int.parse(userIdStr), "Updated mobile profile information");
+      }
+
+      return true;
       } else {
         throw Exception(data['message'] ?? 'Update failed');
       }
