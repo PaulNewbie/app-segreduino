@@ -224,7 +224,7 @@ class _TasksListState extends State<_TasksList> {
         // We use int.parse() because widget.userId is a String, and your API expects an int
         await ApiService.logActivity(
           int.parse(widget.userId), 
-          "Completed task: ${task_id.description}" // This makes the log dynamic!
+          "Completed task: ${task.description}" // This makes the log dynamic!
         );
 
         if (mounted) {
