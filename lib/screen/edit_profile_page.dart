@@ -63,9 +63,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
       await prefs.setString('phone', _phoneController.text.trim());
 
       // --- ADD LOG HERE ---
-      final userIdStr = prefs.getString('user_id');
-      if (userIdStr != null) {
-        await ApiService.logActivity(int.parse(userIdStr), "Updated mobile profile information");
+      final userIdRaw = prefs.get('user_id');
+      if (userIdRaw != null && userIdRaw.toString().isNotEmpty) {
+        await ApiService.logActivity(int.parse(userIdRaw.toString()), "Updated mobile profile information");
       }
 
       return true;

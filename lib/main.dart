@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screen/login.dart';
 import 'screen/homepage.dart';
+import 'screen/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,19 +45,9 @@ class _MyAppState extends State<MyApp> {
       builder: (context, currentMode, _) {
         return MaterialApp(
           title: 'Segreduino',
-          debugShowCheckedModeBanner: false,
-          themeMode: currentMode,
-          theme: ThemeData(
-            brightness: Brightness.light,
-            primarySwatch: Colors.deepPurple,
-            scaffoldBackgroundColor: Colors.white,
-            useMaterial3: true,
-          ),
-          darkTheme: ThemeData(
-            brightness: Brightness.dark,
-            primarySwatch: Colors.deepPurple,
-            useMaterial3: true,
-          ),
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
           routes: {
             '/auth/login': (context) => const LoginPage(),
             '/homepage': (context) => DashboardPage(

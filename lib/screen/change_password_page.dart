@@ -40,9 +40,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         if (success) {
           // --- ADD LOG HERE ---
           final prefs = await SharedPreferences.getInstance();
-          final userIdStr = prefs.getString('user_id');
-          if (userIdStr != null) {
-            await ApiService.logActivity(int.parse(userIdStr), "Changed account password via Mobile App");
+          
+          // Safely grab the ID whether it's an int or String
+          final userIdRaw = prefs.get('user_id'); 
+          
+          if (userIdRaw != null && userIdRaw.toString().isNotEmpty) {
+            await ApiService.logActivity(int.parse(userIdRaw.toString()), "Changed account password via Mobile App");
+          } else {
+            print("ACTIVITY LOG FAILED: user_id is null in SharedPreferences");
           }
 
           ScaffoldMessenger.of(context).showSnackBar(
