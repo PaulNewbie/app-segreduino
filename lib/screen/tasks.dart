@@ -478,7 +478,7 @@ class _TasksListState extends State<_TasksList> {
     int diff = target - now.weekday;
     if (diff <= 0) diff += 7;
     DateTime next = now.add(Duration(days: diff));
-    return 'Next $targetDayOfWeek (${next.month}/${next.day})';
+    return '$targetDayOfWeek (${next.month}/${next.day})';
   }
 
   @override
@@ -521,7 +521,7 @@ class _TasksListState extends State<_TasksList> {
           const SizedBox(height: 8),
 
           _SectionHeader(
-            label: 'Upcoming Routines',
+            label: 'Upcoming Routine Schedules',
             count: _upcomingRoutines.length,
           ),
           const SizedBox(height: 10),

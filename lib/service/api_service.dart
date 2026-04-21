@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 
 class ApiConfig {
   // Set your local IP and port for testing
@@ -358,6 +359,31 @@ class ApiService {
     } catch (e) {
       print('Error logging activity: $e');
       return false;
+    }
+  }
+
+  // 🔹 UPLOAD AVATAR
+  static Future<Map<String, dynamic>> uploadAvatar(String userId, File imageFile) async {
+    
+    var uri = Uri.parse("${ApiConfig.baseUrl}/controllers/Api/upload_avatar_api.php");
+    
+    var request = http.MultipartRequest('POST', uri);
+    
+    request.fields['user_id'] = userId;
+
+    var pic = await http.MultipartFile.fromPath("avatar", imageFile.path);
+    request.files.add(pic);
+
+    var response = await request.send();
+    var responseData = await response.stream.bytesToString();
+
+    // Add a simple print statement so you can see exactly what the server returns in the console!
+    print("Server Response: $responseData"); 
+
+    if (response.statusCode == 200) {
+      return json.decode(responseData);
+    } else {
+      throw Exception('Failed to upload image. Server responded with: ${response.statusCode}');
     }
   }
 

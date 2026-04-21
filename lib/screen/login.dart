@@ -60,6 +60,8 @@ class _LoginPageState extends State<LoginPage> {
       await prefs.setString('email', user['email'] ?? '');
       await prefs.setString('role', user['role'] ?? 'user');
       await prefs.setBool('is_logged_in', true);
+      await prefs.setString('phone', user['phone']?.toString() ?? '');
+      await prefs.setString('avatar_url', user['avatar']?.toString() ?? '');
 
       Navigator.pushReplacement(
         context,

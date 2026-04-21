@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-// import 'package:http/http.dart' as http;
-// import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../service/api_service.dart';
-// Adjust path if needed
 
 // --- DATA MODEL ---
-// We reuse the exact same Task model so it matches the new API data!
 class Task {
   final String id;
   final String userId;
@@ -17,11 +13,12 @@ class Task {
   final String description;
   final String status;
   final String createdAt;
+  final String? completedAt; // Added to catch the new timestamp!
 
   Task({
     required this.id, required this.userId, required this.binId, required this.machineId,
     required this.machineName, required this.binType, required this.description, 
-    required this.status, required this.createdAt,
+    required this.status, required this.createdAt, this.completedAt,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
@@ -35,6 +32,7 @@ class Task {
       description: json['task_description']?.toString() ?? '',
       status: json['task_status']?.toString() ?? 'Pending',
       createdAt: json['created_at']?.toString() ?? '',
+      completedAt: json['completed_at']?.toString(), // Catch the newly added DB column
     );
   }
 }
@@ -64,12 +62,10 @@ class _CompletedTasksPageState extends State<CompletedTasksPage> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String userId = prefs.getString('user_id') ?? '';
       
-      // Use your centralized ApiService to fetch the tasks!
       final List<dynamic> taskData = await ApiService.fetchTasks(userId: userId);
       
       if (mounted) {
         setState(() {
-          // Filter out everything EXCEPT 'completed' or 'done'
           _completedTasks = taskData.map((json) => Task.fromJson(json))
               .where((t) => t.status.toLowerCase() == 'completed' || t.status.toLowerCase() == 'done')
               .toList();
@@ -91,9 +87,9 @@ class _CompletedTasksPageState extends State<CompletedTasksPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Completed Log', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.green.shade600, // Distinct green app bar for completed tasks!
+        backgroundColor: Colors.green.shade600,
       ),
-      backgroundColor: Colors.grey[50], // Very soft grey background to make white cards pop
+      backgroundColor: Colors.grey[50], 
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.green))
           : _error != null
@@ -121,7 +117,6 @@ class _CompletedTasksPageState extends State<CompletedTasksPage> {
     );
   }
 
-  // --- PREMIUM COMPLETED CARD UI ---
   Widget _buildCompletedCard(Task task) {
     return Card(
       elevation: 1,
@@ -145,8 +140,8 @@ class _CompletedTasksPageState extends State<CompletedTasksPage> {
                     style: const TextStyle(
                       fontWeight: FontWeight.bold, 
                       fontSize: 16, 
-                      color: Colors.black54, // Dimmed text
-                      decoration: TextDecoration.lineThrough, // Strikethrough effect!
+                      color: Colors.black54, 
+                      decoration: TextDecoration.lineThrough, 
                     ),
                   ),
                 ),
@@ -172,6 +167,8 @@ class _CompletedTasksPageState extends State<CompletedTasksPage> {
               ],
             ),
             const SizedBox(height: 8),
+            
+            // --- TIME INFORMATION ---
             Row(
               children: [
                 const Icon(Icons.access_time, size: 16, color: Colors.grey),
@@ -179,6 +176,24 @@ class _CompletedTasksPageState extends State<CompletedTasksPage> {
                 Text('Task Date: ${task.createdAt}', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
               ],
             ),
+            
+            // If the completedAt timestamp exists, show it prominently!
+            if (task.completedAt != null && task.completedAt!.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.done_all, size: 16, color: Colors.green),
+                  const SizedBox(width: 4),
+                  Text('Finished: ${task.completedAt}', 
+                    style: TextStyle(
+                      fontSize: 12, 
+                      color: Colors.green[700], 
+                      fontWeight: FontWeight.bold
+                    )
+                  ),
+                ],
+              ),
+            ]
           ],
         ),
       ),

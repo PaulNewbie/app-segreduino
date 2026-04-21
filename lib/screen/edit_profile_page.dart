@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io'; // Needed for File
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart'; // Needed for picking images
 import '../service/api_service.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -25,25 +27,104 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _fullNameController;
   late TextEditingController _emailController;
 
-  bool _isLoading = false; // 🔹 loading state
+  bool _isLoading = false; // loading state for form
+  
+  // --- Profile Picture Variables ---
+  File? _imageFile;
+  final ImagePicker _picker = ImagePicker();
+  bool _isUploadingPic = false;
+  String _userId = "";
+  String _currentAvatarUrl = ""; 
 
   @override
   void initState() {
     super.initState();
     _fullNameController = TextEditingController(text: widget.fullName);
     _emailController = TextEditingController(text: widget.email);
-    _loadPhoneNumber();
+    _loadUserData();
   }
 
-  Future<void> _loadPhoneNumber() async {
+  // 🔹 Load phone, user ID, and existing avatar
+  Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedPhone = prefs.getString('phone') ?? '';
-    _phoneController.text = savedPhone;
+    setState(() {
+      _phoneController.text = prefs.getString('phone') ?? '';
+      _userId = prefs.getString('user_id') ?? '';
+      
+      String savedAvatar = prefs.getString('avatar_url') ?? ''; 
+      
+      // Dynamically grab your domain/IP from your ApiConfig!
+      if (savedAvatar.isNotEmpty && !savedAvatar.startsWith('http')) {
+         
+         String domain = ApiConfig.baseUrl;
+         // Remove "/src" from the end if it exists, because the assets folder is in the root!
+         domain = domain.replaceAll(RegExp(r'/src/?$'), '');
+         _currentAvatarUrl = domain + savedAvatar;
+         
+      } else {
+         _currentAvatarUrl = savedAvatar;
+      }
+    });
+  }
+
+  // 📸 Function to open the gallery
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50, // Compress slightly for faster uploads
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+      _uploadAvatar(); // Automatically upload once selected
+    }
+  }
+
+  // 🚀 Function to send the image to the server
+  Future<void> _uploadAvatar() async {
+    if (_imageFile == null || _userId.isEmpty) return;
+
+    setState(() { _isUploadingPic = true; });
+
+    try {
+      var response = await ApiService.uploadAvatar(_userId, _imageFile!);
+      if (response['success'] == true) {
+        
+        // Optionally save the new avatar URL locally if your API returns it
+        if (response['avatar_url'] != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('avatar_url', response['avatar_url']);
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile picture updated!'), backgroundColor: Colors.green),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(response['message'] ?? 'Upload failed'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() { _isUploadingPic = false; });
+      }
+    }
   }
 
   Future<bool> _saveProfile() async {
-    final url = Uri.parse(
-        '${ApiConfig.baseUrl}/controllers/Actions/update_profile.php');
+    final url = Uri.parse('${ApiConfig.baseUrl}/controllers/Actions/update_profile.php');
     try {
       final response = await http.post(
         url,
@@ -55,20 +136,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
         }),
       );
 
-  final data = jsonDecode(response.body);
-    if (data['success'] == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('fullName', _fullNameController.text.trim());
-      await prefs.setString('email', _emailController.text.trim());
-      await prefs.setString('phone', _phoneController.text.trim());
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('fullName', _fullNameController.text.trim());
+        await prefs.setString('email', _emailController.text.trim());
+        await prefs.setString('phone', _phoneController.text.trim());
 
-      // --- ADD LOG HERE ---
-      final userIdRaw = prefs.get('user_id');
-      if (userIdRaw != null && userIdRaw.toString().isNotEmpty) {
-        await ApiService.logActivity(int.parse(userIdRaw.toString()), "Updated mobile profile information");
-      }
+        // --- ADD LOG HERE ---
+        final userIdRaw = prefs.get('user_id');
+        if (userIdRaw != null && userIdRaw.toString().isNotEmpty) {
+          await ApiService.logActivity(int.parse(userIdRaw.toString()), "Updated mobile profile information");
+        }
 
-      return true;
+        return true;
       } else {
         throw Exception(data['message'] ?? 'Update failed');
       }
@@ -129,6 +210,50 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           color: Colors.green.shade900,
                         ),
                       ),
+                      const SizedBox(height: 20),
+
+                      // 🔹 PROFILE PICTURE WIDGET
+                      GestureDetector(
+                        onTap: _isUploadingPic ? null : _pickImage,
+                        child: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.green.shade100,
+                              backgroundImage: _imageFile != null
+                                  ? FileImage(_imageFile!) as ImageProvider
+                                  : (_currentAvatarUrl.isNotEmpty
+                                      ? NetworkImage(_currentAvatarUrl)
+                                      : null),
+                              child: _imageFile == null && _currentAvatarUrl.isEmpty
+                                  ? Icon(Icons.person, size: 50, color: Colors.green.shade700)
+                                  : null,
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade700,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                padding: const EdgeInsets.all(6),
+                                child: _isUploadingPic
+                                    ? const SizedBox(
+                                        width: 16, 
+                                        height: 16, 
+                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                                      )
+                                    : const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text("Tap to change photo", style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                      
                       const SizedBox(height: 24),
 
                       // 🔹 FULL NAME FIELD (Stricter validation)
@@ -228,25 +353,29 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               setState(() => _isLoading = false);
 
                               if (success) {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Profile updated successfully!'),
-                                  ),
-                                );
-                                Navigator.pop(context, {
-                                  'fullName': _fullNameController.text,
-                                  'email': _emailController.text,
-                                });
+                                if(mounted){
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Profile updated successfully!'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  Navigator.pop(context, {
+                                    'fullName': _fullNameController.text,
+                                    'email': _emailController.text,
+                                  });
+                                }
                               } else {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Failed to update profile'),
-                                  ),
-                                );
+                                if(mounted){
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Failed to update profile'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               }
                             }
                           },

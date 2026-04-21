@@ -91,6 +91,9 @@ class _DashboardPageState extends State<DashboardPage> {
   late String fullName;
   late String email;
   String? userId;
+  
+  // 📸 Variable to hold the loaded image URL
+  String _avatarUrl = '';
 
   // ── Live stats ────────────────────────────────────────────────
   int  _activeTasks    = 0;
@@ -110,6 +113,15 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       userId = prefs.getString('user_id');
+
+      // 📸 Load Avatar URL and construct full link
+      String savedAvatar = prefs.getString('avatar_url') ?? '';
+      if (savedAvatar.isNotEmpty && !savedAvatar.startsWith('http')) {
+         String domain = ApiConfig.baseUrl.replaceAll(RegExp(r'/src/?$'), '');
+         _avatarUrl = domain + savedAvatar;
+      } else {
+         _avatarUrl = savedAvatar;
+      }
 
       // Fetch tasks + notifications in parallel
       final results = await Future.wait([
@@ -145,6 +157,11 @@ class _DashboardPageState extends State<DashboardPage> {
         builder: (_) => EditProfilePage(fullName: fullName, email: email),
       ),
     );
+    
+    // 🔄 Always reload stats when returning from profile page 
+    // so if they changed their picture, it updates immediately!
+    _loadStats(); 
+
     if (result != null) {
       setState(() {
         fullName = result['fullName'] ?? fullName;
@@ -236,7 +253,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: Row(
         children: [
-          // Avatar — tappable, shows initials
+          // Avatar — tappable, shows picture OR initials
           GestureDetector(
             onTap: _navigateToEditProfile,
             child: Stack(
@@ -244,14 +261,20 @@ class _DashboardPageState extends State<DashboardPage> {
                 CircleAvatar(
                   radius: 28,
                   backgroundColor: Colors.white.withOpacity(0.18),
-                  child: Text(
-                    _initials,
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
+                  backgroundImage: _avatarUrl.isNotEmpty 
+                      ? NetworkImage(_avatarUrl) 
+                      : null,
+                  // Only show the text initials if there is NO avatar URL
+                  child: _avatarUrl.isEmpty
+                      ? Text(
+                          _initials,
+                          style: GoogleFonts.inter(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        )
+                      : null,
                 ),
                 Positioned(
                   right: 0,
