@@ -147,89 +147,81 @@ class _TasksPageState extends State<TasksPage>
   }
 
   // ── Filter / sort bar ──────────────────────────────────────
+  // Short display labels for bin filter chips
+  static const Map<String, String> _binFilterLabels = {
+    'All':               'All',
+    'Biodegradable':     'Bio',
+    'Recyclable':        'Recyc',
+    'Non-Biodegradable': 'Non-Bio',
+  };
+
   Widget _buildFilterBar() {
     return AnimatedBuilder(
       animation: _tabController,
       builder: (context, _) {
-        // Only show filters on tabs 0 (Tasks) and 1 (Completed)
-        if (_tabController.index == 2) return const SizedBox.shrink();
         return Container(
           color: AppColors.surface,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Sort row ────────────────────────────────────
-              Row(
-                children: [
-                  const Icon(Icons.sort_rounded,
-                      size: 16, color: AppColors.onSurfaceVariant),
-                  const SizedBox(width: 6),
-                  const Text('Sort:',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.onSurfaceVariant,
-                          fontWeight: FontWeight.w600)),
-                  const SizedBox(width: 8),
-                  _SortChip(
-                    label: 'Newest',
-                    selected: _sortOrder == SortOrder.newest,
-                    onTap: () =>
-                        setState(() => _sortOrder = SortOrder.newest),
-                  ),
-                  const SizedBox(width: 6),
-                  _SortChip(
-                    label: 'Oldest',
-                    selected: _sortOrder == SortOrder.oldest,
-                    onTap: () =>
-                        setState(() => _sortOrder = SortOrder.oldest),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // ── Bin-type filter chips ────────────────────────
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: kBinFilters.map((f) {
-                    final selected = _binFilter == f;
-                    final color = f == 'All'
-                        ? AppColors.primary
-                        : BinColors.foreground(f);
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(f),
-                        selected: selected,
-                        onSelected: (_) =>
-                            setState(() => _binFilter = f),
-                        selectedColor: color,
-                        checkmarkColor: Colors.white,
-                        labelStyle: TextStyle(
-                          color: selected
-                              ? Colors.white
-                              : AppColors.onSurface,
-                          fontWeight: selected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          fontSize: 12,
-                        ),
-                        backgroundColor: AppColors.surfaceVariant,
-                        side: BorderSide(
-                          color: selected ? color : AppColors.outline,
-                          width: selected ? 1.5 : 1,
-                        ),
-                        showCheckmark: false,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                      ),
-                    );
-                  }).toList(),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                // ── Sort chips ──────────────────────────────────
+                _SortChip(
+                  label: '↑ New',
+                  selected: _sortOrder == SortOrder.newest,
+                  onTap: () => setState(() => _sortOrder = SortOrder.newest),
                 ),
-              ),
-            ],
+                const SizedBox(width: 5),
+                _SortChip(
+                  label: '↓ Old',
+                  selected: _sortOrder == SortOrder.oldest,
+                  onTap: () => setState(() => _sortOrder = SortOrder.oldest),
+                ),
+                // ── Thin vertical divider ───────────────────────
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 10),
+                  width: 1,
+                  height: 22,
+                  color: AppColors.outline,
+                ),
+                // ── Bin-type filter chips ───────────────────────
+                ...kBinFilters.map((f) {
+                  final selected = _binFilter == f;
+                  final color = f == 'All'
+                      ? AppColors.primary
+                      : BinColors.foreground(f);
+                  final label = _binFilterLabels[f] ?? f;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: FilterChip(
+                      label: Text(label),
+                      selected: selected,
+                      onSelected: (_) => setState(() => _binFilter = f),
+                      selectedColor: color,
+                      checkmarkColor: Colors.white,
+                      labelStyle: TextStyle(
+                        color: selected ? Colors.white : AppColors.onSurface,
+                        fontWeight:
+                            selected ? FontWeight.w700 : FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                      backgroundColor: AppColors.surfaceVariant,
+                      side: BorderSide(
+                        color: selected ? color : AppColors.outline,
+                        width: selected ? 1.5 : 1,
+                      ),
+                      showCheckmark: false,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                    ),
+                  );
+                }),
+              ],
+            ),
           ),
         );
       },
@@ -302,7 +294,11 @@ class _TasksPageState extends State<TasksPage>
                   binFilter: _binFilter,
                 ),
                 _ScheduledTasksList(
-                    userId: _userId!, userRole: _userRole),
+                  userId:    _userId!,
+                  userRole:  _userRole,
+                  sortOrder: _sortOrder,
+                  binFilter: _binFilter,
+                ),
               ],
             ),
           ),
@@ -937,9 +933,15 @@ class _CompletedTasksListState extends State<CompletedTasksList> {
 class _ScheduledTasksList extends StatefulWidget {
   final String userId;
   final String userRole;
+  final SortOrder sortOrder;
+  final String binFilter;
 
-  const _ScheduledTasksList(
-      {required this.userId, required this.userRole});
+  const _ScheduledTasksList({
+    required this.userId,
+    required this.userRole,
+    required this.sortOrder,
+    required this.binFilter,
+  });
 
   @override
   _ScheduledTasksListState createState() => _ScheduledTasksListState();
@@ -993,6 +995,19 @@ class _ScheduledTasksListState extends State<_ScheduledTasksList> {
     }
   }
 
+  List<ScheduledTask> get _filteredSorted {
+    var list = _scheduledTasks.where((r) {
+      if (widget.binFilter == 'All') return true;
+      return r.binType.toLowerCase().contains(
+          widget.binFilter.split('-').first.toLowerCase());
+    }).toList();
+
+    list.sort((a, b) => widget.sortOrder == SortOrder.newest
+        ? b.createdAt.compareTo(a.createdAt)
+        : a.createdAt.compareTo(b.createdAt));
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -1000,10 +1015,12 @@ class _ScheduledTasksListState extends State<_ScheduledTasksList> {
           child: CircularProgressIndicator(color: AppColors.primary));
     }
 
+    final tasks = _filteredSorted;
+
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: _fetchScheduledTasks,
-      child: _scheduledTasks.isEmpty
+      child: tasks.isEmpty
           ? ListView(children: const [
               SizedBox(height: 60),
               _EmptyState(
@@ -1013,9 +1030,9 @@ class _ScheduledTasksListState extends State<_ScheduledTasksList> {
             ])
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-              itemCount: _scheduledTasks.length,
+              itemCount: tasks.length,
               itemBuilder: (_, i) =>
-                  _buildScheduleCard(_scheduledTasks[i]),
+                  _buildScheduleCard(tasks[i]),
             ),
     );
   }
@@ -1047,9 +1064,10 @@ class _ScheduledTasksListState extends State<_ScheduledTasksList> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
+                    // Neutral indigo — no overlap with any bin-type color
                     color: isDaily
-                        ? AppColors.primarySurface
-                        : AppColors.recyclableBg,
+                        ? const Color(0xFFEDE7F6) // light violet
+                        : const Color(0xFFE8EAF6), // light indigo
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -1061,8 +1079,8 @@ class _ScheduledTasksListState extends State<_ScheduledTasksList> {
                             : Icons.calendar_today_rounded,
                         size: 12,
                         color: isDaily
-                            ? AppColors.primary
-                            : AppColors.recyclable,
+                            ? const Color(0xFF6A1B9A) // deep violet
+                            : const Color(0xFF283593), // deep indigo
                       ),
                       const SizedBox(width: 5),
                       Text(
@@ -1071,8 +1089,8 @@ class _ScheduledTasksListState extends State<_ScheduledTasksList> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: isDaily
-                              ? AppColors.primary
-                              : AppColors.recyclable,
+                              ? const Color(0xFF6A1B9A)
+                              : const Color(0xFF283593),
                         ),
                       ),
                     ],

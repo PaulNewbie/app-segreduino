@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'screen/login.dart';
 import 'screen/homepage.dart';
 import 'screen/app_theme.dart';
+import 'screen/dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,55 +26,60 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Future<Widget> _getInitialScreen() async {
-    final prefs = await SharedPreferences.getInstance();
-    final fullName = prefs.getString('full_name');
-    final email = prefs.getString('email');
-    final isDeleted = prefs.getBool('is_deleted') ?? false;
+  String? _userId;
+  String? _userRole; // Store the user role ('Admin' or 'Staff')
+  bool _isLoading = true;
 
-    if (fullName != null && email != null && !isDeleted) {
-      return DashboardPage(fullName: fullName, email: email);
-    } else {
-      return const LoginPage();
-    }
+  // 🔥 ADDED: State variable to track dark mode
+  bool isDarkMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userId = prefs.getString('user_id');
+      _userRole = prefs.getString('role'); // Retrieve role during check
+      _isLoading = false;
+    });
+  }
+
+  // 🔥 ADDED: A method to allow child widgets to toggle the theme
+  void toggleTheme() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: MyApp.themeNotifier,
-      builder: (context, currentMode, _) {
-        return MaterialApp(
-          title: 'Segreduino',
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          routes: {
-            '/auth/login': (context) => const LoginPage(),
-            '/homepage': (context) => DashboardPage(
-              fullName: '', // You can pass actual values if needed
-              email: '',
-            ),
-            // Add other routes here
-          },
-          home: FutureBuilder<Widget>(
-            future: _getInitialScreen(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-              if (snapshot.hasError) {
-                return const Scaffold(
-                  body: Center(child: Text('Something went wrong')),
-                );
-              }
-              return snapshot.data!;
-            },
-          ),
-        );
-      },
+    if (_isLoading) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Smart Waste Management',
+      
+      // Use the newly defined isDarkMode variable here
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      
+      // Pass the toggle function down to your Dashboard/HomePage
+      home: _userId == null
+          ? const LoginPage()
+          : (_userRole == 'Admin'
+              ? const DashboardPage() // This matches the class in homepage.dart
+              : const DashboardPage()), // Use DashboardPage here too if you haven't made a separate Staff page
     );
   }
 }

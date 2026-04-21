@@ -111,7 +111,7 @@ abstract class AppTheme {
           letterSpacing: 0.2,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -152,7 +152,7 @@ abstract class AppTheme {
         thickness: 1,
         space: 24,
       ),
-      tabBarTheme: const TabBarTheme(
+      tabBarTheme: const TabBarThemeData(
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.onSurfaceVariant,
         indicatorColor: AppColors.primary,
